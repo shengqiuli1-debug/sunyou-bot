@@ -1,0 +1,73 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sunyou-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sunyou_bot}
+      POSTGRES_USER: ${POSTGRES_USER:-sunyou}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sunyou123}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sunyou} -d ${POSTGRES_DB:-sunyou_bot}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    ports:
+      - "${POSTGRES_BIND_ADDR:-127.0.0.1}:${POSTGRES_PUBLIC_PORT:-5432}:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: sunyou-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    ports:
+      - "${REDIS_BIND_ADDR:-127.0.0.1}:${REDIS_PUBLIC_PORT:-6379}:6379"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sunyou-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      BACKEND_ALLOWED_ORIGIN: http://localhost
+      POSTGRES_HOST: postgres
+      REDIS_ADDR: redis:6379
+      LOG_DIR: /app/runtime/logs/backend
+    volumes:
+      - ./runtime/logs:/app/runtime/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "8080"
+
+  nginx:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: sunyou-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  redisdata:

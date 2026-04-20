@@ -1,0 +1,10 @@
+-- Bot reply provenance metadata
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_source TEXT NULL;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS llm_model TEXT NULL;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS fallback_reason TEXT NULL;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS trace_id TEXT NULL;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS force_reply BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS trigger_reason TEXT NULL;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS hype_score INT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_messages_trace_id ON messages(trace_id);

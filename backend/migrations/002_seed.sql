@@ -1,0 +1,1 @@
+-- Optional seed: keep empty intentionally for MVP runtime-created data

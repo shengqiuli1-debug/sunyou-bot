@@ -1,0 +1,4 @@
+ALTER TABLE bot_reply_audits
+  ADD COLUMN IF NOT EXISTS displayable_content_found BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS reasoning_only_response BOOLEAN NOT NULL DEFAULT FALSE;
+
